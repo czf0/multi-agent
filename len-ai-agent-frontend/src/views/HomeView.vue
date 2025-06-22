@@ -66,6 +66,25 @@
             可以回答问题、提供建议、解析知识点，帮助你高效准确地完成各类考试和测验。
           </a-typography-paragraph>
         </a-card>
+        
+        <a-card class="ai-card" :style="{ width: '320px' }" hoverable @click="goToHealthApp">
+          <template #cover>
+            <div class="card-cover health-cover">
+              <icon-heart-fill :style="{ fontSize: '40px', color: '#4CAF50' }" />
+            </div>
+          </template>
+          <template #title>云医通健康助手</template>
+          <template #extra>
+            <a-button type="text">
+              <template #icon>
+                <icon-right />
+              </template>
+            </a-button>
+          </template>
+          <a-typography-paragraph>
+            您的健康顾问，提供健康知识、生活方式建议和基础医疗信息咨询。
+          </a-typography-paragraph>
+        </a-card>
       </div>
     </div>
   </div>
@@ -78,7 +97,8 @@ import {
   IconHeart, 
   IconBulb,
   IconRight,
-  IconBook
+  IconBook,
+  IconHeartFill
 } from '@arco-design/web-vue/es/icon';
 
 export default {
@@ -88,7 +108,8 @@ export default {
     IconHeart,
     IconBulb,
     IconRight,
-    IconBook
+    IconBook,
+    IconHeartFill
   },
   setup() {
     const router = useRouter();
@@ -105,10 +126,15 @@ export default {
       router.push('/exam-app');
     };
     
+    const goToHealthApp = () => {
+      router.push('/health-app');
+    };
+    
     return {
       goToLoveApp,
       goToManusApp,
-      goToExamApp
+      goToExamApp,
+      goToHealthApp
     };
   }
 }
@@ -179,5 +205,9 @@ export default {
 
 .exam-cover {
   background-color: rgba(114, 46, 209, 0.1);
+}
+
+.health-cover {
+  background-color: rgba(76, 175, 80, 0.1);
 }
 </style> 
