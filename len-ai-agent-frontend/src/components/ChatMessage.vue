@@ -1,5 +1,5 @@
 <template>
-  <div class="message" :class="{ 'user-message': isUser, 'ai-message': !isUser }">
+  <div class="message" :class="{ 'user-message': isUser, 'ai-message': !isUser, 'step-message': isStepMessage }">
     <div class="message-avatar" v-if="!isUser">
       <a-avatar :size="32" :style="{ backgroundColor: '#3370FF' }">
         <IconRobot />
@@ -126,9 +126,11 @@ export default {
       return !this.isUser && this.text && 
         (this.text.includes('[点击查看HTML页面](') || 
          this.text.includes('HTML生成成功') ||
+         this.text.includes('generateHtmlWithEmbeddedPages') ||
          this.text.includes('- 下载链接:') && 
          this.text.includes('/api/files/html/') ||
          this.text.match(/Step \d+: 工具\[generateHtml\]结果:/) ||
+         this.text.match(/Step \d+: 工具\[generateHtmlWithEmbeddedPages\]结果:/) ||
          this.text.match(/Step \d+: 工具\[HtmlGenerationTool\]结果:/));
     },
     hasDocumentLink() {
@@ -178,6 +180,7 @@ export default {
       
       // 尝试匹配HTML的Markdown格式链接
       if (this.hasHtmlLink) {
+        // 处理常规的Markdown链接格式
         let htmlMarkdownMatch = text.match(/\[点击查看HTML页面\]\((localhost:8102\/api\/files\/html\/[^)]+)\)/);
         if (htmlMarkdownMatch && htmlMarkdownMatch[1]) {
           return htmlMarkdownMatch[1]; // 返回localhost:8102/api/files/html/xxx.html格式
@@ -196,9 +199,21 @@ export default {
         }
         
         // 尝试从工具结果中提取
-        let htmlToolMatch = text.match(/工具\[(generateHtml|HtmlGenerationTool)\]结果:.*?(\/api\/files\/html\/[^\s\n]+)/);
+        let htmlToolMatch = text.match(/工具\[(generateHtml|HtmlGenerationTool|generateHtmlWithEmbeddedPages)\]结果:.*?(\/api\/files\/html\/[^\s\n]+)/);
         if (htmlToolMatch && htmlToolMatch[2]) {
           return 'localhost:8102' + htmlToolMatch[2];
+        }
+        
+        // 从包含generateHtmlWithEmbeddedPages的消息中提取
+        let embedHtmlMatch = this.text.match(/generateHtmlWithEmbeddedPages.*?\[(.*?)\]\((\/api\/files\/html\/[^\s\n)]+)\)/);
+        if (embedHtmlMatch && embedHtmlMatch[2]) {
+          return 'localhost:8102' + embedHtmlMatch[2];
+        }
+        
+        // 匹配任何包含/api/files/html/的链接
+        let anyHtmlMatch = this.text.match(/(\/api\/files\/html\/[^\s\n)"']+)/);
+        if (anyHtmlMatch && anyHtmlMatch[1]) {
+          return 'localhost:8102' + anyHtmlMatch[1];
         }
       }
       
@@ -230,17 +245,17 @@ export default {
       
       // 处理HTML相关文本
       if (this.hasHtmlLink) {
-        // 如果是工具结果消息，特殊处理
-        if (this.text.match(/Step \d+: 工具\[(generateHtml|HtmlGenerationTool)\]结果:/)) {
-          return '<strong class="success-text">HTML页面已生成成功！</strong><br>点击下方按钮查看';
+        // 如果是工具结果消息或包含generateHtmlWithEmbeddedPages，特殊处理
+        if (this.text.match(/Step \d+: 工具\[(generateHtml|HtmlGenerationTool|generateHtmlWithEmbeddedPages)\]结果:/) || 
+            this.text.includes('generateHtmlWithEmbeddedPages')) {
+          return '<strong class="success-text">HTML生成成功！</strong><br>点击下方按钮查看';
         }
         
         processed = processed
           .replace(/HTML生成成功！/g, '<strong class="success-text">HTML生成成功！</strong>')
           .replace(/文件名:/g, '<strong>文件名:</strong>')
-          .replace(/本地路径:/g, '<strong>本地路径:</strong>')
           .replace(/下载链接:/g, '<strong>下载链接:</strong>')
-          .replace(/Step \d+: 工具\[(generateHtml|HtmlGenerationTool)\]结果:/g, '<strong class="success-text">HTML生成成功！</strong>');
+          .replace(/Step \d+: 工具\[(generateHtml|HtmlGenerationTool|generateHtmlWithEmbeddedPages)\]结果:/g, '<strong class="success-text">HTML生成成功！</strong>');
         
         // 将Markdown链接转换为普通文本，因为我们已经有了查看按钮
         processed = processed.replace(/\[点击查看HTML页面\]\(.*?\)/g, '');
@@ -277,10 +292,24 @@ export default {
 </script>
 
 <style scoped>
+/* 添加新的动画效果 */
+@keyframes messageAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .message {
   display: flex;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
   align-items: flex-start;
+  animation: messageAppear 0.4s ease-out;
+  transition: all var(--transition-smooth);
 }
 
 .user-message {
@@ -291,63 +320,142 @@ export default {
   flex-direction: row;
 }
 
+/* 步骤消息特殊样式 */
+.ai-message.step-message {
+  position: relative;
+  margin-left: 20px;
+  border-left: 2px dashed var(--color-primary-light);
+  animation: fadeScale 0.25s ease-out forwards;
+}
+
+.ai-message.step-message::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 15px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary-light);
+}
+
 .message-avatar {
-  margin: 0 12px;
+  margin: 0 16px;
   flex-shrink: 0;
+  transform: scale(1);
+  transition: transform var(--transition-quick);
+}
+
+.message:hover .message-avatar {
+  transform: scale(1.05);
 }
 
 .message-content {
   max-width: 70%;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 18px 24px;
+  border-radius: 16px;
   position: relative;
   word-break: break-word;
   line-height: 1.6;
+  backdrop-filter: blur(10px);
+  max-height: 500px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-mid-gray) transparent;
 }
 
 .user-message .message-content {
-  background-color: rgba(22, 202, 157, 0.1);
-  border: 1px solid rgba(22, 202, 157, 0.2);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--color-mid-gray);
   text-align: right;
-  border-top-right-radius: 2px;
+  border-top-right-radius: 4px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(8px);
+  background-image: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.4) 0%, 
+    rgba(118, 156, 255, 0.1) 100%);
 }
 
 .ai-message .message-content {
-  background-color: var(--color-bg-2);
-  border: 1px solid var(--color-border-2);
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--color-light-gray);
   text-align: left;
-  border-top-left-radius: 2px;
+  border-top-left-radius: 4px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(8px);
+  background-image: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.4) 0%, 
+    rgba(233, 223, 212, 0.2) 100%);
+}
+
+.ai-message.step-message .message-content {
+  background-color: rgba(248, 248, 248, 0.9);
+  border: 1px solid rgba(118, 156, 255, 0.5);
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.message-content:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-1px);
+}
+
+/* 添加折痕效果 */
+.message-content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    transparent 0%, 
+    transparent 50%, 
+    rgba(255, 255, 255, 0.03) 50%, 
+    transparent 100%);
+  background-size: 100% 8px;
 }
 
 .message-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .message-sender {
   font-weight: 500;
-  color: var(--color-text-1);
+  color: var(--text-primary);
   font-size: 14px;
+  letter-spacing: 0.3px;
 }
 
 .message-text {
-  color: var(--color-text-1);
+  color: var(--text-primary);
   white-space: pre-wrap;
   font-size: 14px;
+  line-height: 1.7;
 }
 
 .message-text pre {
   margin: 0;
-  font-family: inherit;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
   white-space: pre-wrap;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
 }
 
 .message-time {
   font-size: 12px;
-  color: var(--color-text-3);
+  color: var(--text-light);
   margin-left: 8px;
+  opacity: 0.7;
 }
 
 .user-message .message-header {
@@ -389,5 +497,19 @@ export default {
 
 .document-message :deep(a:hover) {
   text-decoration: underline;
+}
+
+/* 添加消息内容的滚动条样式 */
+.message-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.message-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-mid-gray);
+  border-radius: 10px;
 }
 </style> 

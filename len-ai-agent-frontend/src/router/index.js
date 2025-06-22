@@ -15,6 +15,16 @@ const routes = [
     path: '/manus-app',
     name: 'manusApp',
     component: () => import('../views/ManusAppView.vue')
+  },
+  {
+    path: '/exam-app',
+    name: 'examApp',
+    component: () => import('../views/ExamAppView.vue')
+  },
+  {
+    path: '/health-app',
+    name: 'healthApp',
+    component: () => import('../views/HealthAppView.vue')
   }
 ]
 

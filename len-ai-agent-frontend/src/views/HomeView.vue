@@ -4,7 +4,7 @@
       <div class="welcome-logo">
         <icon-robot :style="{ fontSize: '64px', color: '#165DFF' }" />
       </div>
-      <h1 class="welcome-title">欢迎使用AI聊天应用</h1>
+      <h1 class="welcome-title">欢迎使用Len-AI聊天应用</h1>
       <div class="welcome-description">
         请从左侧菜单选择一个AI助手开始对话，或直接点击下方按钮
       </div>
@@ -47,6 +47,25 @@
             强大的智能助手，可以回答问题、提供建议、协助创作和分析信息。
           </a-typography-paragraph>
         </a-card>
+        
+        <a-card class="ai-card" :style="{ width: '320px' }" hoverable @click="goToExamApp">
+          <template #cover>
+            <div class="card-cover exam-cover">
+              <icon-book :style="{ fontSize: '40px', color: '#722ED1' }" />
+            </div>
+          </template>
+          <template #title>智慧答题助手</template>
+          <template #extra>
+            <a-button type="text">
+              <template #icon>
+                <icon-right />
+              </template>
+            </a-button>
+          </template>
+          <a-typography-paragraph>
+            可以回答问题、提供建议、解析知识点，帮助你高效准确地完成各类考试和测验。
+          </a-typography-paragraph>
+        </a-card>
       </div>
     </div>
   </div>
@@ -58,7 +77,8 @@ import {
   IconRobot, 
   IconHeart, 
   IconBulb,
-  IconRight
+  IconRight,
+  IconBook
 } from '@arco-design/web-vue/es/icon';
 
 export default {
@@ -67,7 +87,8 @@ export default {
     IconRobot,
     IconHeart,
     IconBulb,
-    IconRight
+    IconRight,
+    IconBook
   },
   setup() {
     const router = useRouter();
@@ -80,9 +101,14 @@ export default {
       router.push('/manus-app');
     };
     
+    const goToExamApp = () => {
+      router.push('/exam-app');
+    };
+    
     return {
       goToLoveApp,
-      goToManusApp
+      goToManusApp,
+      goToExamApp
     };
   }
 }
@@ -149,5 +175,9 @@ export default {
 
 .manus-cover {
   background-color: rgba(15, 198, 194, 0.1);
+}
+
+.exam-cover {
+  background-color: rgba(114, 46, 209, 0.1);
 }
 </style> 

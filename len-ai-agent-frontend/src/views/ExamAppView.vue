@@ -1,10 +1,10 @@
 <template>
-  <div class="love-app">
+  <div class="exam-app-view">
     <div class="chat-container">
       <div class="chat-header">
         <div class="chat-title">
-          <icon-heart class="chat-icon" />
-          <h1>AI 恋爱大师</h1>
+          <icon-book class="chat-icon" />
+          <h1>智慧答题助手</h1>
         </div>
         <a-button type="outline" @click="clearMessages">
           <template #icon>
@@ -14,21 +14,21 @@
         </a-button>
       </div>
         <div class="chat-description">
-          我是你的恋爱大师，可以为你提供情感、约会和关系方面的建议与支持。
+          我是你的智慧答题助手，可以解答各种学科问题，分析知识点，提供考试技巧。
       </div>
       
       <div class="chat-content">
         <div class="welcome-message">
           <div class="welcome-message-content">
-            <h2>你好，我是AI恋爱大师！</h2>
+            <h2>你好，我是智慧答题助手！</h2>
             <p>我可以帮助你:</p>
             <ul>
-              <li>提供情感关系咨询，解答感情困惑</li>
-              <li>给出约会建议，提高约会成功率</li>
-              <li>分析关系问题，改善沟通技巧</li>
-              <li>设计浪漫惊喜，增添感情乐趣</li>
+              <li>解答各类学科问题，从数学、英语到物理、化学等</li>
+              <li>分析复杂题目，提供解题思路和步骤</li>
+              <li>讲解知识点，帮助你更好地理解概念</li>
+              <li>提供考试技巧和学习方法建议</li>
             </ul>
-            <p>请告诉我你的情感困扰，或直接提出你的问题！</p>
+            <p>请告诉我你想了解什么，或者直接提出你的问题！</p>
           </div>
         </div>
         
@@ -37,19 +37,19 @@
           :key="index"
           :text="message.content"
           :is-user="message.isUser"
-          :sender-name="message.isUser ? '我' : '恋爱大师'"
+          :sender-name="message.isUser ? '我' : '答题助手'"
           :timestamp="message.timestamp"
         />
         
         <div v-if="isLoading" class="typing-indicator">
           <a-spin dot />
-          <span>恋爱大师正在回复...</span>
+          <span>答题助手正在回复...</span>
         </div>
       </div>
       
       <div class="chat-input">
         <a-input-search
-          placeholder="告诉我你的情感疑问..."
+          placeholder="输入你的问题..."
           button-text="发送"
           search-button
           @search="sendMessage"
@@ -66,15 +66,15 @@
 <script>
 import { onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import ChatMessage from '@/components/ChatMessage.vue';
-import { connectToLoveAppSse } from '@/services/api';
+import { connectToQuizChat } from '@/services/api';
 import { getOrCreateChatId } from '@/utils/uuid';
-import { IconHeart, IconDelete } from '@arco-design/web-vue/es/icon';
+import { IconBook, IconDelete } from '@arco-design/web-vue/es/icon';
 
 export default {
-  name: 'LoveAppView',
+  name: 'ExamAppView',
   components: {
     ChatMessage,
-    IconHeart,
+    IconBook,
     IconDelete
   },
   setup() {
@@ -83,57 +83,49 @@ export default {
     const inputValue = ref('');
     const isLoading = ref(false);
     const messages = ref([]);
-    
-    // 获取或创建聊天 ID
-    chatId.value = getOrCreateChatId('love_app_chat_id');
-    
-    // 从localStorage加载历史消息
+    const currentSteps = ref([]);
+
+    chatId.value = getOrCreateChatId('exam_app_chat_id');
+
     const loadMessages = () => {
       const savedMessages = localStorage.getItem(`chat_messages_${chatId.value}`);
       if (savedMessages) {
         messages.value = JSON.parse(savedMessages);
       }
     };
-    
-    // 保存消息到localStorage
+
     const saveMessages = () => {
       localStorage.setItem(`chat_messages_${chatId.value}`, JSON.stringify(messages.value));
     };
-    
-    // 加载消息历史
+
     loadMessages();
     
-    const clearMessages = () => {
-      if (window.confirm('你确定要清除所有聊天记录吗？此操作不可恢复。')) {
-        messages.value = [];
-        localStorage.removeItem(`chat_messages_${chatId.value}`);
+    const parseSteps = (text) => {
+      const stepPattern = /Step \d+: 工具\[\w+\].*?(?=Step \d+:|$)/gs;
+      
+      let matches;
+      try {
+        matches = Array.from(text.matchAll(stepPattern));
+      } catch (e) {
+        console.error('正则匹配错误:', e);
+        return [text];
       }
-    };
-    
-    // 自动滚动到底部
-    const scrollToBottom = () => {
-      nextTick(() => {
-        const chatContent = document.querySelector('.chat-content');
-        if (chatContent) {
-          chatContent.scrollTo({
-            top: chatContent.scrollHeight,
-            behavior: 'smooth'
-          });
+      
+      if (matches.length === 0) {
+        if (text.includes('Step') && text.includes('工具[')) {
+          return [text];
         }
-      });
-    };
-
-    // 监听消息列表变化，自动滚动
-    watch(() => messages.value.length, () => {
-      scrollToBottom();
-    });
-
-    // 监听最后一条消息内容变化，自动滚动
-    watch(() => messages.value[messages.value.length - 1]?.content, () => {
-      if (messages.value.length > 0) {
-        scrollToBottom();
+        
+        if (text.trim()) {
+          return [text];
+        }
+        
+        return [];
       }
-    });
+      
+      const steps = matches.map(match => match[0].trim());
+      return steps;
+    };
     
     // 处理键盘事件
     const handleKeydown = (e) => {
@@ -150,11 +142,9 @@ export default {
       }
     };
     
-    // 发送消息给后端
     const sendMessage = (message) => {
       if (!message.trim() || isLoading.value) return;
       
-      // 添加用户消息
       const userMessage = {
         content: message,
         isUser: true,
@@ -162,43 +152,44 @@ export default {
       };
       messages.value.push(userMessage);
       saveMessages();
-      
-      // 清空输入框
+
       inputValue.value = '';
       isLoading.value = true;
       
-      // 如果有现存的连接，先关闭
       if (currentEventSource.value) {
         currentEventSource.value.close();
       }
       
-      // 用于累积SSE消息的变量
+      currentSteps.value = [];
       let accumulatedResponse = '';
       
-      // 建立新的 SSE 连接
-      const eventSource = connectToLoveAppSse(
+      const eventSource = connectToQuizChat(
         message,
-        chatId.value,
         (data) => {
-          // 累加新收到的消息片段
           accumulatedResponse += data;
           
-          // 更新或创建AI回复消息
-          const aiMessageIndex = messages.value.findIndex(
-            msg => !msg.isUser && msg.timestamp > userMessage.timestamp
-          );
+          const steps = parseSteps(accumulatedResponse);
           
-          if (aiMessageIndex !== -1) {
-            // 更新现有消息
-            messages.value[aiMessageIndex].content = accumulatedResponse;
-          } else {
-            // 创建新消息
-            const aiMessage = {
-              content: accumulatedResponse,
+          if (steps.length > currentSteps.value.length) {
+            for (let i = currentSteps.value.length; i < steps.length; i++) {
+              const stepMessage = {
+                content: steps[i],
               isUser: false,
-              timestamp: Date.now()
+                timestamp: Date.now() + i
             };
-            messages.value.push(aiMessage);
+              messages.value.push(stepMessage);
+            }
+            currentSteps.value = steps;
+          } else if (steps.length > 0) {
+            const lastStepIndex = messages.value.findIndex(
+              msg => !msg.isUser && msg.content.includes(currentSteps.value[currentSteps.value.length - 1].substring(0, 20))
+            );
+            
+            if (lastStepIndex !== -1) {
+              messages.value[lastStepIndex].content = steps[steps.length - 1];
+            }
+            
+            currentSteps.value = steps;
           }
           
           saveMessages();
@@ -209,17 +200,43 @@ export default {
         }
       );
       
-      // 当连接关闭时
       eventSource.addEventListener('done', () => {
         isLoading.value = false;
         eventSource.close();
       });
       
-      // 保存当前连接，以便后续可以关闭
       currentEventSource.value = eventSource;
     };
+
+    const clearMessages = () => {
+      if (window.confirm('你确定要清除所有聊天记录吗？此操作不可恢复。')) {
+        messages.value = [];
+        localStorage.removeItem(`chat_messages_${chatId.value}`);
+      }
+    };
     
-    // 组件卸载前关闭SSE连接
+    const scrollToBottom = () => {
+      nextTick(() => {
+        const chatContent = document.querySelector('.chat-content');
+        if (chatContent) {
+          chatContent.scrollTo({
+            top: chatContent.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      });
+    };
+
+    watch(() => messages.value.length, () => {
+      scrollToBottom();
+    });
+
+    watch(() => messages.value[messages.value.length - 1]?.content, () => {
+      if (messages.value.length > 0) {
+        scrollToBottom();
+      }
+    });
+    
     onBeforeUnmount(() => {
       if (currentEventSource.value) {
         currentEventSource.value.close();
@@ -237,32 +254,15 @@ export default {
       handleKeydown
     };
   }
-};
+}
 </script>
 
 <style scoped>
-.love-app {
+.exam-app-view {
   height: 100%;
   display: flex;
   flex-direction: column;
   background-color: var(--color-off-white);
-  position: relative;
-  overflow: hidden;
-}
-
-/* 添加爱情主题背景装饰 */
-.love-app::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(circle at 10% 10%, rgba(255, 130, 150, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 90% 90%, rgba(255, 217, 172, 0.04) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
 }
 
 .chat-container {
@@ -273,8 +273,6 @@ export default {
   margin: 0 auto;
   width: 100%;
   padding: 32px;
-  position: relative;
-  z-index: 1;
 }
 
 .chat-header {
@@ -294,7 +292,7 @@ export default {
   left: 0;
   width: 100px;
   height: 2px;
-  background: linear-gradient(90deg, rgb(255, 130, 150), transparent);
+  background: linear-gradient(90deg, var(--color-accent), transparent);
 }
 
 .chat-title {
@@ -305,13 +303,12 @@ export default {
 
 .chat-icon {
   font-size: 26px;
-  color: rgb(255, 130, 150);
+  color: rgb(97, 0, 205);
   margin-right: 14px;
   position: relative;
   z-index: 1;
 }
 
-/* 动态图标效果 */
 .chat-icon::before {
   content: '';
   position: absolute;
@@ -320,24 +317,10 @@ export default {
   transform: translate(-50%, -50%);
   width: 40px;
   height: 40px;
-  background-color: rgba(255, 130, 150, 0.08);
+  background-color: rgba(97, 0, 205, 0.06);
   border-radius: 50%;
   z-index: -1;
   animation: pulse var(--transition-breathe);
-}
-
-/* 粒子效果 */
-.chat-icon::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.8), transparent 70%);
-  filter: blur(2px);
-  opacity: 0;
-  animation: sparkle 3s ease-in-out infinite;
 }
 
 .chat-title h1 {
@@ -346,18 +329,6 @@ export default {
   color: var(--text-primary);
   margin: 0;
   letter-spacing: 0.4px;
-  position: relative;
-}
-
-.chat-title h1::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 40%;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(255, 130, 150, 0.5), transparent);
-  opacity: 0.7;
 }
 
 .chat-description {
@@ -391,14 +362,13 @@ export default {
   border: 3px solid var(--color-off-white);
 }
 
-/* 层次化卡片 */
 .welcome-message {
-  background-color: rgba(255, 217, 172, 0.08);
+  background-color: rgba(97, 0, 205, 0.03);
   border-radius: 18px;
   padding: 28px 32px;
   margin-bottom: 30px;
   animation: fadeScale 0.8s ease-out;
-  border: 1px solid rgba(255, 130, 150, 0.12);
+  border: 1px solid rgba(97, 0, 205, 0.1);
   box-shadow: var(--shadow-soft);
   transition: all var(--transition-smooth);
   position: relative;
@@ -406,7 +376,6 @@ export default {
   backdrop-filter: blur(10px);
 }
 
-/* 纸张折痕效果 */
 .welcome-message::before {
   content: '';
   position: absolute;
@@ -417,13 +386,12 @@ export default {
   background: linear-gradient(
     90deg, 
     transparent, 
-    rgba(255, 130, 150, 0.2) 30%, 
-    rgba(255, 130, 150, 0.2) 70%, 
+    rgba(97, 0, 205, 0.15) 30%, 
+    rgba(97, 0, 205, 0.15) 70%, 
     transparent
   );
 }
 
-/* 能量波纹效果 */
 .welcome-message::after {
   content: '';
   position: absolute;
@@ -434,12 +402,12 @@ export default {
   background-image: 
     radial-gradient(
       circle at 10% 10%, 
-      rgba(255, 130, 150, 0.04) 0%, 
+      rgba(97, 0, 205, 0.03) 0%, 
       transparent 60%
     ),
     radial-gradient(
       circle at 90% 90%, 
-      rgba(255, 217, 172, 0.06) 0%, 
+      rgba(97, 0, 205, 0.05) 0%, 
       transparent 60%
     );
   pointer-events: none;
@@ -447,7 +415,7 @@ export default {
 
 .welcome-message:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(255, 130, 150, 0.15);
+  box-shadow: 0 10px 30px rgba(97, 0, 205, 0.12);
 }
 
 .welcome-message-content h2 {
@@ -467,7 +435,7 @@ export default {
   left: 0;
   width: 40%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(255, 130, 150, 0.5), transparent);
+  background: linear-gradient(90deg, rgba(97, 0, 205, 0.4), transparent);
 }
 
 .welcome-message-content p {
@@ -500,8 +468,8 @@ export default {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: rgba(255, 130, 150, 0.6);
-  box-shadow: 0 0 0 4px rgba(255, 130, 150, 0.1);
+  background-color: rgba(97, 0, 205, 0.5);
+  box-shadow: 0 0 0 4px rgba(97, 0, 205, 0.08);
 }
 
 .chat-input {
@@ -509,16 +477,14 @@ export default {
   position: relative;
 }
 
-/* 呼吸感按钮 */
 .chat-input :deep(.arco-btn-primary) {
-  background-color: rgba(255, 130, 150, 0.9);
-  border-color: rgba(255, 130, 150, 0.9);
+  background-color: rgb(97, 0, 205);
+  border-color: rgb(97, 0, 205);
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.4);
   border-radius: 8px;
   padding: 0 20px;
-  backdrop-filter: blur(5px);
 }
 
 .chat-input :deep(.arco-btn-primary)::before {
@@ -538,8 +504,8 @@ export default {
 }
 
 .chat-input :deep(.arco-btn-primary):hover {
-  background-color: rgba(255, 110, 130, 0.95);
-  box-shadow: 0 6px 15px rgba(255, 130, 150, 0.3);
+  background-color: rgb(107, 20, 215);
+  box-shadow: 0 6px 15px rgba(97, 0, 205, 0.3);
   transform: translateY(-2px);
 }
 
@@ -549,7 +515,7 @@ export default {
 
 .chat-input :deep(.arco-btn-primary):active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(255, 130, 150, 0.3);
+  box-shadow: 0 2px 8px rgba(97, 0, 205, 0.3);
 }
 
 .chat-input :deep(.arco-input-search) {
@@ -568,7 +534,7 @@ export default {
 
 .chat-input :deep(.arco-input-search):focus-within {
   box-shadow: var(--shadow-medium);
-  border-color: rgba(255, 130, 150, 0.3);
+  border-color: rgba(97, 0, 205, 0.3);
   background-color: rgba(255, 255, 255, 0.9);
 }
 
@@ -587,30 +553,6 @@ export default {
   font-style: italic;
 }
 
-/* 清除记录按钮样式 */
-.chat-header :deep(.arco-btn-outline) {
-  border-color: rgba(255, 130, 150, 0.3);
-  color: rgba(255, 130, 150, 0.9);
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(5px);
-  transition: all var(--transition-smooth);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(255, 130, 150, 0.1);
-}
-
-.chat-header :deep(.arco-btn-outline):hover {
-  border-color: rgba(255, 130, 150, 0.5);
-  color: rgba(255, 130, 150, 1);
-  background-color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 130, 150, 0.15);
-}
-
-.chat-header :deep(.arco-btn-outline):active {
-  transform: translateY(0);
-}
-
 .typing-indicator {
   display: flex;
   align-items: center;
@@ -627,7 +569,7 @@ export default {
 }
 
 .typing-indicator :deep(.arco-spin-dot) {
-  color: rgba(255, 130, 150, 0.8);
+  color: rgba(97, 0, 205, 0.7);
 }
 
 @keyframes pulse {
@@ -650,17 +592,6 @@ export default {
   100% {
     opacity: 1;
     transform: scale(1);
-  }
-}
-
-@keyframes sparkle {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
   }
 }
 </style> 

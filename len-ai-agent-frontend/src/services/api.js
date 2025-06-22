@@ -53,4 +53,46 @@ export const connectToManusChat = (message, onMessage, onError) => {
   };
   
   return eventSource;
+};
+
+// 智慧答题助手应用的SSE连接
+export const connectToQuizChat = (message, onMessage, onError) => {
+  const url = `${API_BASE_URL}/ai/quiz/chat?message=${encodeURIComponent(message)}`;
+  const eventSource = new EventSource(url);
+  
+  eventSource.onmessage = (event) => {
+    if (onMessage && event.data) {
+      onMessage(event.data);
+    }
+  };
+  
+  eventSource.onerror = (error) => {
+    if (onError) {
+      onError(error);
+    }
+    eventSource.close();
+  };
+  
+  return eventSource;
+};
+
+// 云医通健康助手应用的SSE连接
+export const connectToHealthChat = (message, onMessage, onError) => {
+  const url = `${API_BASE_URL}/ai/health/chat?message=${encodeURIComponent(message)}`;
+  const eventSource = new EventSource(url);
+  
+  eventSource.onmessage = (event) => {
+    if (onMessage && event.data) {
+      onMessage(event.data);
+    }
+  };
+  
+  eventSource.onerror = (error) => {
+    if (onError) {
+      onError(error);
+    }
+    eventSource.close();
+  };
+  
+  return eventSource;
 }; 

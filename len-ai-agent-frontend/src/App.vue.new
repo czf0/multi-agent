@@ -7,11 +7,13 @@
         class="layout-sider"
         width="220"
         hide-trigger
+        collapsible
+        :collapsed="siderCollapsed"
       >
         <div class="sider-header">
           <div class="logo">
             <img src="@/assets/logo.svg" alt="AI应用" />
-            <span class="logo-text">智慧客</span>
+            <span v-if="!siderCollapsed" class="logo-text">智慧客</span>
           </div>
         </div>
         
@@ -57,14 +59,6 @@
                 </template>
                 <span class="menu-label">智慧答题助手</span>
               </a-menu-item>
-              <a-menu-item key="health-app" class="menu-item">
-                <template #icon>
-                  <div class="menu-icon-wrapper health-icon">
-                    <icon-heart-fill />
-                  </div>
-                </template>
-                <span class="menu-label">云医通健康助手</span>
-              </a-menu-item>
             </a-menu>
           </div>
         </div>
@@ -72,6 +66,9 @@
 
       <!-- 内容区域 -->
       <a-layout>
+        <div class="sidebar-toggle-btn" @click="toggleSider" :class="{ 'sidebar-is-open': !siderCollapsed }">
+          <icon-menu />
+        </div>
         <a-layout-content class="layout-content">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">
@@ -85,14 +82,16 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { 
   IconHeart, 
   IconRobot, 
   IconBook,
   IconHome,
-  IconHeartFill
+  IconLeft,
+  IconRight,
+  IconMenu
 } from '@arco-design/web-vue/es/icon';
 
 export default {
@@ -102,11 +101,14 @@ export default {
     IconRobot,
     IconBook,
     IconHome,
-    IconHeartFill
+    IconLeft,
+    IconRight,
+    IconMenu
   },
   setup() {
     const route = useRoute();
     const router = useRouter();
+    const siderCollapsed = ref(true);
     
     const selectedKeys = computed(() => {
       const path = route.path;
@@ -114,7 +116,6 @@ export default {
       if (path === '/love-app') return ['love-app'];
       if (path === '/manus-app') return ['manus-app'];
       if (path === '/exam-app') return ['exam-app'];
-      if (path === '/health-app') return ['health-app'];
       return ['home'];
     });
     
@@ -132,15 +133,18 @@ export default {
         case 'exam-app':
           router.push('/exam-app');
           break;
-        case 'health-app':
-          router.push('/health-app');
-          break;
       }
     };
     
+    const toggleSider = () => {
+      siderCollapsed.value = !siderCollapsed.value;
+    };
+    
     return {
+      siderCollapsed,
       selectedKeys,
-      onMenuItemClick
+      onMenuItemClick,
+      toggleSider
     };
   }
 };
@@ -197,7 +201,11 @@ body {
   position: relative;
   z-index: 10;
   backdrop-filter: blur(10px);
-  transition: all var(--transition-smooth);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout-sider.arco-layout-sider-collapsed {
+  margin-left: -220px;
 }
 
 .layout-sider:hover {
@@ -268,10 +276,6 @@ body {
 
 .logo:hover img {
   transform: scale(1.1) rotate(5deg);
-}
-
-.collapse-btn {
-  display: none;
 }
 
 .sider-content {
@@ -360,11 +364,6 @@ body {
   color: rgb(97, 0, 205);
 }
 
-.health-icon {
-  background-color: rgba(15, 198, 194, 0.1);
-  color: rgb(15, 198, 194);
-}
-
 .menu-label {
   font-weight: 500;
   letter-spacing: 0.2px;
@@ -415,11 +414,6 @@ body {
   box-shadow: 0 2px 8px rgba(97, 0, 205, 0.3);
 }
 
-.arco-menu-light .arco-menu-item.arco-menu-selected .menu-icon-wrapper.health-icon {
-  background-color: rgb(15, 198, 194);
-  box-shadow: 0 2px 8px rgba(15, 198, 194, 0.3);
-}
-
 .arco-menu-light .arco-menu-item:hover {
   background-color: rgba(118, 156, 255, 0.05);
   color: var(--color-primary);
@@ -454,5 +448,35 @@ body {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
+}
+
+.sidebar-toggle-btn {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  width: 34px;
+  height: 34px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-secondary);
+}
+
+.sidebar-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  color: var(--text-primary);
+}
+
+.sidebar-toggle-btn.sidebar-is-open {
+  left: 240px;
 }
 </style>

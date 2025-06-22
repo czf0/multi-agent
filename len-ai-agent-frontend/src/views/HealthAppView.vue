@@ -1,10 +1,10 @@
 <template>
-  <div class="love-app">
+  <div class="health-app">
     <div class="chat-container">
       <div class="chat-header">
         <div class="chat-title">
-          <icon-heart class="chat-icon" />
-          <h1>AI 恋爱大师</h1>
+          <icon-heart-fill class="chat-icon" />
+          <h1>云医通健康助手</h1>
         </div>
         <a-button type="outline" @click="clearMessages">
           <template #icon>
@@ -13,22 +13,22 @@
           清除记录
         </a-button>
       </div>
-        <div class="chat-description">
-          我是你的恋爱大师，可以为你提供情感、约会和关系方面的建议与支持。
+      <div class="chat-description">
+        我是您的健康顾问，可以提供健康知识、生活方式建议和基础医疗信息咨询。
       </div>
       
       <div class="chat-content">
         <div class="welcome-message">
           <div class="welcome-message-content">
-            <h2>你好，我是AI恋爱大师！</h2>
-            <p>我可以帮助你:</p>
+            <h2>您好，我是云医通健康助手！</h2>
+            <p>我可以帮助您：</p>
             <ul>
-              <li>提供情感关系咨询，解答感情困惑</li>
-              <li>给出约会建议，提高约会成功率</li>
-              <li>分析关系问题，改善沟通技巧</li>
-              <li>设计浪漫惊喜，增添感情乐趣</li>
+              <li>解答常见健康问题和医疗知识</li>
+              <li>提供健康生活方式和饮食建议</li>
+              <li>分享疾病预防和健康管理知识</li>
+              <li>推荐适合您的健康习惯和运动方式</li>
             </ul>
-            <p>请告诉我你的情感困扰，或直接提出你的问题！</p>
+            <p class="disclaimer">请注意：我提供的信息仅供参考，不能替代专业医生的诊断和建议。如有严重健康问题，请及时就医。</p>
           </div>
         </div>
         
@@ -37,19 +37,19 @@
           :key="index"
           :text="message.content"
           :is-user="message.isUser"
-          :sender-name="message.isUser ? '我' : '恋爱大师'"
+          :sender-name="message.isUser ? '我' : '健康助手'"
           :timestamp="message.timestamp"
         />
         
         <div v-if="isLoading" class="typing-indicator">
           <a-spin dot />
-          <span>恋爱大师正在回复...</span>
+          <span>健康助手正在回复...</span>
         </div>
       </div>
       
       <div class="chat-input">
         <a-input-search
-          placeholder="告诉我你的情感疑问..."
+          placeholder="请输入您的健康问题..."
           button-text="发送"
           search-button
           @search="sendMessage"
@@ -64,17 +64,17 @@
 </template>
 
 <script>
-import { onBeforeUnmount, ref, watch, nextTick } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import ChatMessage from '@/components/ChatMessage.vue';
-import { connectToLoveAppSse } from '@/services/api';
+import { connectToHealthChat } from '@/services/api';
 import { getOrCreateChatId } from '@/utils/uuid';
-import { IconHeart, IconDelete } from '@arco-design/web-vue/es/icon';
+import { IconHeartFill, IconDelete } from '@arco-design/web-vue/es/icon';
 
 export default {
-  name: 'LoveAppView',
+  name: 'HealthAppView',
   components: {
     ChatMessage,
-    IconHeart,
+    IconHeartFill,
     IconDelete
   },
   setup() {
@@ -83,9 +83,10 @@ export default {
     const inputValue = ref('');
     const isLoading = ref(false);
     const messages = ref([]);
+    const currentSteps = ref([]);
     
     // 获取或创建聊天 ID
-    chatId.value = getOrCreateChatId('love_app_chat_id');
+    chatId.value = getOrCreateChatId('health_app_chat_id');
     
     // 从localStorage加载历史消息
     const loadMessages = () => {
@@ -104,36 +105,45 @@ export default {
     loadMessages();
     
     const clearMessages = () => {
-      if (window.confirm('你确定要清除所有聊天记录吗？此操作不可恢复。')) {
+      if (window.confirm('您确定要清除所有聊天记录吗？此操作不可恢复。')) {
         messages.value = [];
         localStorage.removeItem(`chat_messages_${chatId.value}`);
       }
     };
     
-    // 自动滚动到底部
-    const scrollToBottom = () => {
-      nextTick(() => {
-        const chatContent = document.querySelector('.chat-content');
-        if (chatContent) {
-          chatContent.scrollTo({
-            top: chatContent.scrollHeight,
-            behavior: 'smooth'
-          });
-        }
-      });
-    };
-
-    // 监听消息列表变化，自动滚动
-    watch(() => messages.value.length, () => {
-      scrollToBottom();
-    });
-
-    // 监听最后一条消息内容变化，自动滚动
-    watch(() => messages.value[messages.value.length - 1]?.content, () => {
-      if (messages.value.length > 0) {
-        scrollToBottom();
+    // 解析步骤函数
+    const parseSteps = (text) => {
+      // 使用正则表达式匹配 "Step X:" 格式
+      const stepPattern = /Step \d+: 工具\[\w+\].*?(?=Step \d+:|$)/gs;
+      
+      // 尝试找到所有步骤
+      let matches;
+      try {
+        matches = Array.from(text.matchAll(stepPattern));
+      } catch (e) {
+        console.error('正则匹配错误:', e);
+        return [text];
       }
-    });
+      
+      // 如果没有匹配到步骤，检查是否包含部分步骤格式
+      if (matches.length === 0) {
+        if (text.includes('Step') && text.includes('工具[')) {
+          // 可能是不完整的步骤，返回原文本
+          return [text];
+        }
+        
+        // 检查非步骤格式的其他类型消息
+        if (text.trim()) {
+          return [text];
+        }
+        
+        return [];
+      }
+      
+      // 创建步骤数组并确保每个步骤都是完整的
+      const steps = matches.map(match => match[0].trim());
+      return steps;
+    };
     
     // 处理键盘事件
     const handleKeydown = (e) => {
@@ -172,33 +182,44 @@ export default {
         currentEventSource.value.close();
       }
       
-      // 用于累积SSE消息的变量
+      // 重置步骤数组
+      currentSteps.value = [];
       let accumulatedResponse = '';
       
       // 建立新的 SSE 连接
-      const eventSource = connectToLoveAppSse(
+      const eventSource = connectToHealthChat(
         message,
-        chatId.value,
         (data) => {
           // 累加新收到的消息片段
           accumulatedResponse += data;
           
-          // 更新或创建AI回复消息
-          const aiMessageIndex = messages.value.findIndex(
-            msg => !msg.isUser && msg.timestamp > userMessage.timestamp
-          );
+          // 解析出步骤
+          const steps = parseSteps(accumulatedResponse);
           
-          if (aiMessageIndex !== -1) {
-            // 更新现有消息
-            messages.value[aiMessageIndex].content = accumulatedResponse;
-          } else {
-            // 创建新消息
-            const aiMessage = {
-              content: accumulatedResponse,
-              isUser: false,
-              timestamp: Date.now()
-            };
-            messages.value.push(aiMessage);
+          // 更新步骤数组
+          if (steps.length > currentSteps.value.length) {
+            // 有新的步骤
+            for (let i = currentSteps.value.length; i < steps.length; i++) {
+              // 为每个新步骤创建一个新的响应
+              const stepMessage = {
+                content: steps[i],
+                isUser: false,
+                timestamp: Date.now() + i
+              };
+              messages.value.push(stepMessage);
+            }
+            currentSteps.value = steps;
+          } else if (steps.length > 0) {
+            // 最后一个步骤有更新
+            const lastStepIndex = messages.value.findIndex(
+              msg => !msg.isUser && msg.content.includes(currentSteps.value[currentSteps.value.length - 1].substring(0, 20))
+            );
+            
+            if (lastStepIndex !== -1) {
+              messages.value[lastStepIndex].content = steps[steps.length - 1];
+            }
+            
+            currentSteps.value = steps;
           }
           
           saveMessages();
@@ -241,28 +262,11 @@ export default {
 </script>
 
 <style scoped>
-.love-app {
+.health-app {
   height: 100%;
   display: flex;
   flex-direction: column;
   background-color: var(--color-off-white);
-  position: relative;
-  overflow: hidden;
-}
-
-/* 添加爱情主题背景装饰 */
-.love-app::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(circle at 10% 10%, rgba(255, 130, 150, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 90% 90%, rgba(255, 217, 172, 0.04) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
 }
 
 .chat-container {
@@ -273,8 +277,6 @@ export default {
   margin: 0 auto;
   width: 100%;
   padding: 32px;
-  position: relative;
-  z-index: 1;
 }
 
 .chat-header {
@@ -294,7 +296,7 @@ export default {
   left: 0;
   width: 100px;
   height: 2px;
-  background: linear-gradient(90deg, rgb(255, 130, 150), transparent);
+  background: linear-gradient(90deg, #4CAF50, transparent);
 }
 
 .chat-title {
@@ -305,13 +307,12 @@ export default {
 
 .chat-icon {
   font-size: 26px;
-  color: rgb(255, 130, 150);
+  color: #4CAF50;
   margin-right: 14px;
   position: relative;
   z-index: 1;
 }
 
-/* 动态图标效果 */
 .chat-icon::before {
   content: '';
   position: absolute;
@@ -320,24 +321,10 @@ export default {
   transform: translate(-50%, -50%);
   width: 40px;
   height: 40px;
-  background-color: rgba(255, 130, 150, 0.08);
+  background-color: rgba(76, 175, 80, 0.08);
   border-radius: 50%;
   z-index: -1;
   animation: pulse var(--transition-breathe);
-}
-
-/* 粒子效果 */
-.chat-icon::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.8), transparent 70%);
-  filter: blur(2px);
-  opacity: 0;
-  animation: sparkle 3s ease-in-out infinite;
 }
 
 .chat-title h1 {
@@ -346,18 +333,6 @@ export default {
   color: var(--text-primary);
   margin: 0;
   letter-spacing: 0.4px;
-  position: relative;
-}
-
-.chat-title h1::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 40%;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(255, 130, 150, 0.5), transparent);
-  opacity: 0.7;
 }
 
 .chat-description {
@@ -391,14 +366,13 @@ export default {
   border: 3px solid var(--color-off-white);
 }
 
-/* 层次化卡片 */
 .welcome-message {
-  background-color: rgba(255, 217, 172, 0.08);
+  background-color: rgba(76, 175, 80, 0.04);
   border-radius: 18px;
   padding: 28px 32px;
   margin-bottom: 30px;
   animation: fadeScale 0.8s ease-out;
-  border: 1px solid rgba(255, 130, 150, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.15);
   box-shadow: var(--shadow-soft);
   transition: all var(--transition-smooth);
   position: relative;
@@ -406,7 +380,6 @@ export default {
   backdrop-filter: blur(10px);
 }
 
-/* 纸张折痕效果 */
 .welcome-message::before {
   content: '';
   position: absolute;
@@ -417,13 +390,12 @@ export default {
   background: linear-gradient(
     90deg, 
     transparent, 
-    rgba(255, 130, 150, 0.2) 30%, 
-    rgba(255, 130, 150, 0.2) 70%, 
+    rgba(76, 175, 80, 0.2) 30%, 
+    rgba(76, 175, 80, 0.2) 70%, 
     transparent
   );
 }
 
-/* 能量波纹效果 */
 .welcome-message::after {
   content: '';
   position: absolute;
@@ -434,12 +406,12 @@ export default {
   background-image: 
     radial-gradient(
       circle at 10% 10%, 
-      rgba(255, 130, 150, 0.04) 0%, 
+      rgba(76, 175, 80, 0.04) 0%, 
       transparent 60%
     ),
     radial-gradient(
       circle at 90% 90%, 
-      rgba(255, 217, 172, 0.06) 0%, 
+      rgba(76, 175, 80, 0.06) 0%, 
       transparent 60%
     );
   pointer-events: none;
@@ -447,7 +419,7 @@ export default {
 
 .welcome-message:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(255, 130, 150, 0.15);
+  box-shadow: 0 10px 30px rgba(76, 175, 80, 0.15);
 }
 
 .welcome-message-content h2 {
@@ -467,7 +439,7 @@ export default {
   left: 0;
   width: 40%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(255, 130, 150, 0.5), transparent);
+  background: linear-gradient(90deg, rgba(76, 175, 80, 0.5), transparent);
 }
 
 .welcome-message-content p {
@@ -475,6 +447,17 @@ export default {
   color: var(--text-secondary);
   margin-bottom: 14px;
   line-height: 1.6;
+}
+
+.welcome-message-content .disclaimer {
+  font-size: 14px;
+  color: #f57c00;
+  font-style: italic;
+  margin-top: 18px;
+  padding: 10px;
+  border-left: 3px solid #f57c00;
+  background-color: rgba(245, 124, 0, 0.05);
+  border-radius: 0 8px 8px 0;
 }
 
 .welcome-message-content ul {
@@ -500,8 +483,8 @@ export default {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: rgba(255, 130, 150, 0.6);
-  box-shadow: 0 0 0 4px rgba(255, 130, 150, 0.1);
+  background-color: rgba(76, 175, 80, 0.6);
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
 }
 
 .chat-input {
@@ -509,16 +492,14 @@ export default {
   position: relative;
 }
 
-/* 呼吸感按钮 */
 .chat-input :deep(.arco-btn-primary) {
-  background-color: rgba(255, 130, 150, 0.9);
-  border-color: rgba(255, 130, 150, 0.9);
+  background-color: #4CAF50;
+  border-color: #4CAF50;
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.4);
   border-radius: 8px;
   padding: 0 20px;
-  backdrop-filter: blur(5px);
 }
 
 .chat-input :deep(.arco-btn-primary)::before {
@@ -538,8 +519,8 @@ export default {
 }
 
 .chat-input :deep(.arco-btn-primary):hover {
-  background-color: rgba(255, 110, 130, 0.95);
-  box-shadow: 0 6px 15px rgba(255, 130, 150, 0.3);
+  background-color: #43A047;
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.3);
   transform: translateY(-2px);
 }
 
@@ -549,7 +530,7 @@ export default {
 
 .chat-input :deep(.arco-btn-primary):active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(255, 130, 150, 0.3);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 
 .chat-input :deep(.arco-input-search) {
@@ -568,7 +549,7 @@ export default {
 
 .chat-input :deep(.arco-input-search):focus-within {
   box-shadow: var(--shadow-medium);
-  border-color: rgba(255, 130, 150, 0.3);
+  border-color: rgba(76, 175, 80, 0.3);
   background-color: rgba(255, 255, 255, 0.9);
 }
 
@@ -587,30 +568,6 @@ export default {
   font-style: italic;
 }
 
-/* 清除记录按钮样式 */
-.chat-header :deep(.arco-btn-outline) {
-  border-color: rgba(255, 130, 150, 0.3);
-  color: rgba(255, 130, 150, 0.9);
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(5px);
-  transition: all var(--transition-smooth);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(255, 130, 150, 0.1);
-}
-
-.chat-header :deep(.arco-btn-outline):hover {
-  border-color: rgba(255, 130, 150, 0.5);
-  color: rgba(255, 130, 150, 1);
-  background-color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 130, 150, 0.15);
-}
-
-.chat-header :deep(.arco-btn-outline):active {
-  transform: translateY(0);
-}
-
 .typing-indicator {
   display: flex;
   align-items: center;
@@ -627,7 +584,7 @@ export default {
 }
 
 .typing-indicator :deep(.arco-spin-dot) {
-  color: rgba(255, 130, 150, 0.8);
+  color: rgba(76, 175, 80, 0.8);
 }
 
 @keyframes pulse {
@@ -650,17 +607,6 @@ export default {
   100% {
     opacity: 1;
     transform: scale(1);
-  }
-}
-
-@keyframes sparkle {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
   }
 }
 </style> 
