@@ -95,6 +95,9 @@ class LoveAppTest {
         //测试html生成
         testMessage("生成一个HTML文件，内容是'七夕appointment'");
 
+        //测试内嵌网页html生成
+        testMessage("生成一个内嵌网页的 HTML文件，内容是'七夕appointment' 内嵌的页面为https://blog.csdn.net/jgk666666 https://mbd.baidu.com/newspage/data/dtlandingsuper?nid=dt_5035641807220252494");
+
         // 测试联网搜索问题的答案
         testMessage("周末想带女朋友去上海约会，搜索一下推荐几个适合情侣的小众打卡地？");
 
