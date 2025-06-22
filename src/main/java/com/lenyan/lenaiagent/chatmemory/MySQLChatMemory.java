@@ -22,7 +22,8 @@ import java.util.stream.Collectors;
  * MySQL实现的对话记忆
  * 将对话内容持久化到MySQL数据库
  */
-@Component
+//todo 按需打开
+//@Component
 @Slf4j
 public class MySQLChatMemory implements ChatMemory {
 

@@ -101,7 +101,6 @@ public class PDFGenerationTool {
                 StringBuilder result = new StringBuilder();
                 result.append("PDF生成成功！\n");
                 result.append("- 文件名: ").append(pdfFileName).append("\n");
-                result.append("- 本地路径: ").append(filePath).append("\n");
                 result.append("- 下载链接: [点击下载PDF](").append(downloadUrl).append(")\n");
                 
                 if (!chineseFontLoaded) {

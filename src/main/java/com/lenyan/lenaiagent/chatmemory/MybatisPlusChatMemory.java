@@ -12,7 +12,8 @@ import java.util.List;
  * 基于Mybatis-Plus实现的对话记忆
  * 使用ChatMemoryService进行数据库操作
  */
-@Component
+//todo 按需打开
+//@Component
 @Slf4j
 public class MybatisPlusChatMemory implements ChatMemory {
 

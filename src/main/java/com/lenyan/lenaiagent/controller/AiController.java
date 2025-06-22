@@ -1,7 +1,9 @@
 package com.lenyan.lenaiagent.controller;
 
 
+import com.lenyan.lenaiagent.agent.LenHealthAssistant;
 import com.lenyan.lenaiagent.agent.LenManus;
+import com.lenyan.lenaiagent.agent.QuizAssistant;
 import com.lenyan.lenaiagent.app.LoveApp;
 import jakarta.annotation.Resource;
 import org.springframework.ai.chat.model.ChatModel;
@@ -102,5 +104,29 @@ public class AiController {
     public SseEmitter doChatWithManus(String message) {
         LenManus lenManus = new LenManus(allTools, dashscopeChatModel);
         return lenManus.runStream(message);
+    }
+
+    /**
+     * 流式调用 Manus 超级智能体
+     *
+     * @param message
+     * @return
+     */
+    @GetMapping("/quiz/chat")
+    public SseEmitter doChatWithquiz(String message) {
+        QuizAssistant quizAssistant = new QuizAssistant(allTools, dashscopeChatModel);
+        return quizAssistant.runStream(message);
+    }
+
+    /**
+     * 流式调用 云医通健康助手
+     *
+     * @param message
+     * @return
+     */
+    @GetMapping("/health/chat")
+    public SseEmitter doChatWithHealthAssistant(String message) {
+        LenHealthAssistant healthAssistant = new LenHealthAssistant(allTools, dashscopeChatModel);
+        return healthAssistant.runStream(message);
     }
 }

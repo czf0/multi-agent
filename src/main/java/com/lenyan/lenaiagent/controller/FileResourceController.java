@@ -172,8 +172,17 @@ public class FileResourceController {
             if (contentType.equals("text/html")) {
                 // 添加安全相关头信息，允许从原始站点加载资源
                 headers.add("X-Content-Type-Options", "nosniff");
-                headers.add("X-Frame-Options", "SAMEORIGIN");
-                headers.add("Content-Security-Policy", "default-src 'self'; img-src 'self' https://* data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';");
+                // 移除X-Frame-Options以允许在iframe中嵌入内容
+                // headers.add("X-Frame-Options", "SAMEORIGIN");
+                
+                // 更新内容安全策略，允许iframe嵌入任何源的内容
+                headers.add("Content-Security-Policy", 
+                    "default-src 'self'; " +
+                    "img-src 'self' https://* data:; " + 
+                    "style-src 'self' 'unsafe-inline'; " + 
+                    "script-src 'self' 'unsafe-inline'; " + 
+                    "frame-src *; " +  // 允许任何源的iframe
+                    "connect-src *;");  // 允许连接到任何源
             }
             
             return ResponseEntity.ok()

@@ -35,15 +35,15 @@ public class LoveApp {
     private static final String SYSTEM_PROMPT = "**恋爱大师·情感导航员**  \n" + "10年情感咨询经验，擅长亲密关系理论与沟通技巧。提供中立建议，保护隐私。通过情绪确认、需求拆解（3-5维度）、心理学理论（如非暴力沟通）解析问题，给出2种实操策略（如\"我句式\"对话模拟），引导关系边界建立。示例：\"遗忘纪念日可能涉及记忆模式/爱意表达方式差异，建议用'观察+感受'沟通\"。不评判道德、不做医疗建议，严守伦理规范。您的专属情感顾问，随时为您解惑。";
     private final ChatClient chatClient;
 
-    public LoveApp(ChatModel dashscopeChatModel, MybatisPlusChatMemory mybatisPluschatMemory ,MySQLChatMemory jdbcmysqlchatMemory) {
+    public LoveApp(ChatModel dashscopeChatModel/*, MybatisPlusChatMemory mybatisPluschatMemory ,MySQLChatMemory jdbcmysqlchatMemory*/) {
 //         String fileDir = System.getProperty("user.dir") + "/tmp/chat-memory";
 //         ChatMemory chatMemory = new FileBasedChatMemory(fileDir);
 
-//        ChatMemory chatMemory = new InMemoryChatMemory();
+        ChatMemory chatMemory = new InMemoryChatMemory();
 //        ChatMemory chatMemory = new MySQLChatMemory(dataSource);
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
-                .defaultAdvisors(new MessageChatMemoryAdvisor(mybatisPluschatMemory),
+                .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory),
                         // 记录日志
                         new MyLoggerAdvisor(),
                         // 违禁词检测 - 从文件读取违禁词
