@@ -1,11 +1,19 @@
 spring:
   application:
-    name: len-ai-agent
+    name:  -ai-agent
   profiles:
     active: local
-
+  ai:
+    dashscope:
+      api-key: sk-dd4b2ee7b44f468281f2adc443b43e74
+  datasource:
+    mysql:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/ ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+        username: root
+        password: 123456
 server:
-  port: 8123
+  port: 8102
   servlet:
     context-path: /api
 # springdoc-openapi config
@@ -19,7 +27,7 @@ springdoc:
   group-configs:
     - group: 'default'
       paths-to-match: '/**'
-      packages-to-scan: com.lenyan.lenaiagent.controller
+      packages-to-scan: com.licanfu. aiagent.controller
 # knife4j config
 knife4j:
   enable: true

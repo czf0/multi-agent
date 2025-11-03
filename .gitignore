@@ -1,6 +1,6 @@
 ### CUSTOM ###
 application-local.yml
-/src/main/java/com/lenyan/lenaiagent/demo/invoke/TestApiKey.java
+/src/main/java/com/licanfu/ aiagent/demo/invoke/TestApiKey.java
 /tmp/*
 /src/main/resources/mcp-serversbf.json
 
