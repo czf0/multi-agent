@@ -61,8 +61,8 @@ AI Agent是一个以AI开发为核心的智能体项目，旨在提供强大的A
 - 任务状态追踪
 
 ## 网页展示
-![](https://gitee.com/licanfu/ai_-superintelligent_agent-image/blob/master/%E9%A6%96%E9%A1%B5.PNG)
-![](https://gitee.com/licanfu/ai_-superintelligent_agent-image/blob/master/%E6%81%8B%E7%88%B1%E5%8A%A9%E6%89%8B%E9%A1%B5%E9%9D%A2.PNG)
+![](https://gitee.com/licanfu/ai_-superintelligent_agent-image/raw/master/%E9%A6%96%E9%A1%B5.PNG)
+![](https://gitee.com/licanfu/ai_-superintelligent_agent-image/raw/master/%E6%81%8B%E7%88%B1%E5%8A%A9%E6%89%8B%E9%A1%B5%E9%9D%A2.PNG)
 ## 目录结构（后端）
 ```
 ai-agent/
