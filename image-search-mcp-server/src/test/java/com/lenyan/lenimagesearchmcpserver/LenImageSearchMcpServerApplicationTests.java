@@ -1,4 +1,4 @@
-package com.licanfu. imagesearchmcpserver;
+package com.czf. imagesearchmcpserver;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

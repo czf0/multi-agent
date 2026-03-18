@@ -65,6 +65,43 @@
                 </template>
                 <span class="menu-label">云医通健康助手</span>
               </a-menu-item>
+
+            <!-- 系统管理菜单组 -->
+            <div class="menu-header">
+              <span>系统管理</span>
+            </div>
+            <a-menu-item key="admin-llm-config" class="menu-item">
+              <template #icon>
+                <div class="menu-icon-wrapper admin-icon">
+                  <icon-settings />
+                </div>
+              </template>
+              <span class="menu-label">LLM 配置</span>
+            </a-menu-item>
+            <a-menu-item key="admin-vector-db" class="menu-item">
+              <template #icon>
+                <div class="menu-icon-wrapper admin-icon">
+                  <icon-settings />
+                </div>
+              </template>
+              <span class="menu-label">向量数据库配置</span>
+            </a-menu-item>
+            <a-menu-item key="admin-agent-binding" class="menu-item">
+              <template #icon>
+                <div class="menu-icon-wrapper admin-icon">
+                  <icon-settings />
+                </div>
+              </template>
+              <span class="menu-label">智能体绑定</span>
+            </a-menu-item>
+            <a-menu-item key="admin-agent" class="menu-item">
+              <template #icon>
+                <div class="menu-icon-wrapper admin-icon">
+                  <icon-settings />
+                </div>
+              </template>
+              <span class="menu-label">智能体管理</span>
+            </a-menu-item>
             </a-menu>
           </div>
         </div>
@@ -87,12 +124,13 @@
 <script>
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  IconHeart, 
-  IconRobot, 
+import {
+  IconHeart,
+  IconRobot,
   IconBook,
   IconHome,
-  IconHeartFill
+  IconHeartFill,
+  IconSettings
 } from '@arco-design/web-vue/es/icon';
 
 export default {
@@ -102,7 +140,8 @@ export default {
     IconRobot,
     IconBook,
     IconHome,
-    IconHeartFill
+    IconHeartFill,
+    IconSettings
   },
   setup() {
     const route = useRoute();
@@ -115,9 +154,13 @@ export default {
       if (path === '/manus-app') return ['manus-app'];
       if (path === '/exam-app') return ['exam-app'];
       if (path === '/health-app') return ['health-app'];
+      if (path === '/admin/llm-config') return ['admin-llm-config'];
+      if (path === '/admin/vector-db-config') return ['admin-vector-db'];
+      if (path === '/admin/agent-binding') return ['admin-agent-binding'];
+      if (path === '/admin/agent') return ['admin-agent'];
       return ['home'];
     });
-    
+
     const onMenuItemClick = (key) => {
       switch(key) {
         case 'home':
@@ -134,6 +177,18 @@ export default {
           break;
         case 'health-app':
           router.push('/health-app');
+          break;
+        case 'admin-llm-config':
+          router.push('/admin/llm-config');
+          break;
+        case 'admin-vector-db':
+          router.push('/admin/vector-db-config');
+          break;
+        case 'admin-agent-binding':
+          router.push('/admin/agent-binding');
+          break;
+        case 'admin-agent':
+          router.push('/admin/agent');
           break;
       }
     };
@@ -365,6 +420,11 @@ body {
   color: rgb(15, 198, 194);
 }
 
+.admin-icon {
+  background-color: rgba(100, 100, 100, 0.1);
+  color: rgb(100, 100, 100);
+}
+
 .menu-label {
   font-weight: 500;
   letter-spacing: 0.2px;
@@ -418,6 +478,11 @@ body {
 .arco-menu-light .arco-menu-item.arco-menu-selected .menu-icon-wrapper.health-icon {
   background-color: rgb(15, 198, 194);
   box-shadow: 0 2px 8px rgba(15, 198, 194, 0.3);
+}
+
+.arco-menu-light .arco-menu-item.arco-menu-selected .menu-icon-wrapper.admin-icon {
+  background-color: rgb(100, 100, 100);
+  box-shadow: 0 2px 8px rgba(100, 100, 100, 0.3);
 }
 
 .arco-menu-light .arco-menu-item:hover {

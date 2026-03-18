@@ -25,6 +25,27 @@ const routes = [
     path: '/health-app',
     name: 'healthApp',
     component: () => import('../views/HealthAppView.vue')
+  },
+  // Admin routes
+  {
+    path: '/admin/llm-config',
+    name: 'llmConfig',
+    component: () => import('../views/admin/LlmConfigView.vue')
+  },
+  {
+    path: '/admin/vector-db-config',
+    name: 'vectorDbConfig',
+    component: () => import('../views/admin/VectorDbConfigView.vue')
+  },
+  {
+    path: '/admin/agent-binding',
+    name: 'agentBinding',
+    component: () => import('../views/admin/AgentBindingView.vue')
+  },
+  {
+    path: '/admin/agent',
+    name: 'agentConfig',
+    component: () => import('../views/admin/AgentConfigView.vue')
   }
 ]
 

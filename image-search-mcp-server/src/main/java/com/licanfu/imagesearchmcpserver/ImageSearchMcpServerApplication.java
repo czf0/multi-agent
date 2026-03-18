@@ -1,6 +1,6 @@
-package com.licanfu. imagesearchmcpserver;
+package com.czf. imagesearchmcpserver;
 
-import com.licanfu. imagesearchmcpserver.tools.ImageSearchTool;
+import com.czf. imagesearchmcpserver.tools.ImageSearchTool;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.boot.SpringApplication;

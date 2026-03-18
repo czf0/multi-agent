@@ -1,4 +1,4 @@
-package com.licanfu. imagesearchmcpserver.tools;
+package com.czf. imagesearchmcpserver.tools;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;

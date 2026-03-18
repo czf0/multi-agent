@@ -1,17 +1,27 @@
 spring:
   application:
-    name:  -ai-agent
+    name: multi-ai-agent
   profiles:
     active: local
   ai:
     dashscope:
-      api-key: sk-dd4b2ee7b44f468281f2adc443b43e74
+      api-key: ${MODEL_API_KEY}
+      base-url: ${MODEL_BASE_URL}
+      chat:
+        enabled: false
+    ollama:
+      base-url: ${MODEL_BASE_URL}
+      chat:
+        enabled: false
+    openai:
+      api-key: ${MODEL_API_KEY}
+      base-url: ${MODEL_BASE_URL}
   datasource:
     mysql:
         driver-class-name: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://localhost:3306/ ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
-        username: root
-        password: 123456
+        url: jdbc:mysql://localhost:3306/ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+        username: ${MYSQL_USER:root}
+        password: ${MYSQL_PASSWORD:root}
 server:
   port: 8102
   servlet:
@@ -27,7 +37,7 @@ springdoc:
   group-configs:
     - group: 'default'
       paths-to-match: '/**'
-      packages-to-scan: com.licanfu. aiagent.controller
+      packages-to-scan: com.czf.aiagent.controller
 # knife4j config
 knife4j:
   enable: true
@@ -37,3 +47,9 @@ logging:
   level:
 #    org.springframework.ai.chat.advisor.SimpleChatAdvisor: DEBUG
     org.springframework.ai: DEBUG
+    org.springframework.ai.chat.client: TRACE
+    org.springframework.ai.chat.client.advisor: TRACE
+    org.springframework.ai.chat.memory: TRACE
+    com.alibaba.dashscope: DEBUG
+    reactor.netty: DEBUG
+    org.springframework.web.reactive: DEBUG
